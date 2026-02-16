@@ -225,7 +225,7 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
             panel.Add(CreateButtonsPanel(new Button(OnBrowseNeovimLaunchPath) { text = "Browse..." }));
 
             string launchArguments = NeovimCodeEditorSettings.NeovimLaunchArguments;
-            var launchArgumentOptions = new List<string> { "--listen $pipe", "-- --listen $pipe", null };
+            var launchArgumentOptions = new List<string> { "--listen $(pipe)", "-- --listen $(pipe)", null };
             int launchArgumentsIndex = launchArgumentOptions.IndexOf(
                 launchArguments, 0, launchArgumentOptions.Count - 1);
 
