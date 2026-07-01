@@ -1,9 +1,15 @@
 {
     "name": "com.github-nmaillet.neovimunitycodeeditor",
     "displayName": "Neovim Unity Code Editor",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Neovim Code Editor for Unity. Generates CSPROJ/SLN(X) files and opens files in Neovim using named pipes.",
-    "keywords": ["unity", "neovim", "external", "code", "editor"],
+    "keywords": [
+        "unity",
+        "neovim",
+        "external",
+        "code",
+        "editor"
+    ],
     "license": "MIT",
     "author": {
         "name": "Nic Maillet",
