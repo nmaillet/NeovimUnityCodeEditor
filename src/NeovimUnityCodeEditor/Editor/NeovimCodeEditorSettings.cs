@@ -63,7 +63,7 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
 
         public static string NeovimLaunchArguments
         {
-            get => EditorPrefs.GetString(_neovimLaunchArgumentsKey, "--listen $pipe");
+            get => EditorPrefs.GetString(_neovimLaunchArgumentsKey, "--listen $(pipe)");
             set => EditorPrefs.SetString(_neovimLaunchArgumentsKey, value);
         }
 
