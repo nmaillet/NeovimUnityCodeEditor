@@ -126,7 +126,7 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
                 var newProject = new ProjectInfo
                 {
                     Assembly = assembly,
-                    CsProjFilename = $"{rootSourcePath}/{assembly.name}.csproj",
+                    CsProjFilename = $"{rootSourcePath}/.{assembly.name}.csproj",
                     RootSourcePath = rootSourcePath,
                     NestedProjects = new List<ProjectInfo>(),
                 };
