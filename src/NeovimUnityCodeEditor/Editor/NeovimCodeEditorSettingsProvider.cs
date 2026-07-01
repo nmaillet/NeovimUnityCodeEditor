@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -7,6 +9,8 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
 {
     public class NeovimCodeEditorSettingsProvider : SettingsProvider
     {
+        public const string SettingsPath = "Preferences/External Tools/Neovim Code Editor";
+
         private const int LabelWidth = 180;
 
         private TextField _binPathTextField;
@@ -15,8 +19,7 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
         private TextField _neovimLaunchArgumentsTextField;
         private TextField _postOpenKeysTextField;
 
-        public NeovimCodeEditorSettingsProvider()
-            : base("Preferences/External Tools/Neovim Code Editor", SettingsScope.User)
+        public NeovimCodeEditorSettingsProvider() : base(SettingsPath, SettingsScope.User)
         {
         }
 
@@ -97,8 +100,8 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
                 new Button(OnSearchNeovimBinPath)
                 {
                     text = "Search",
-                    enabledSelf = Application.platform is RuntimePlatform.WindowsEditor,
-                    tooltip = "* Windows only currently\n\nSearch for an nvim executable in PATH.",
+                    enabledSelf = ProcessHelper.SupportsFindExecutablePath,
+                    tooltip = "* Windows/Linux only currently\n\nSearch for an nvim executable in PATH.",
                 }
             ));
 
@@ -135,8 +138,8 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
             {
                 value = NeovimCodeEditorSettings.SearchForNamedPipe,
                 labelElement = { style = { minWidth = LabelWidth } },
-                enabledSelf = Application.platform is RuntimePlatform.WindowsEditor,
-                tooltip = "* Windows only currently\n\nSearch for a Neovim named pipe (search filter of "
+                enabledSelf = ProcessHelper.SupportsFindNamedPipe,
+                tooltip = "* Windows/Linux only currently\n\nSearch for a Neovim named pipe (search filter of "
                     + "'\\\\.\\pipe\\*nvim*') with the current directory set to the project folder directory. Tries to "
                     + "open a file with the default named pipe path first.",
             };
@@ -148,7 +151,6 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
             {
                 value = NeovimCodeEditorSettings.AllowCodeEditorFallback,
                 labelElement = { style = { minWidth = LabelWidth } },
-                enabledSelf = Application.platform is RuntimePlatform.WindowsEditor,
                 tooltip = "Whether or not to fallback to another code editor if Neovim fails to open the file.",
             };
             allowFallbackToggle.RegisterCallback<ChangeEvent<bool>>(
@@ -314,7 +316,10 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
 
         private void OnDefaultNamedPipePath()
         {
-            string path = $"\\\\.\\pipe\\nvim.unity.{PathUtils.ProjectName}";
+            string pipeName = $"nvim.unity.{PathUtils.ProjectName}";
+            string rootPath = ProcessHelper.GetPipeRootPath();
+            string path = string.IsNullOrWhiteSpace(rootPath) ? string.Empty : Path.Combine(rootPath, pipeName);
+
             _namedPipePathTextField.value = path;
             NeovimCodeEditorSettings.NamedPipePath = path;
         }

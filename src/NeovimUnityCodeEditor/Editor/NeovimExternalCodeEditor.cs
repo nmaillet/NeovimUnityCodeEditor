@@ -14,8 +14,7 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
     [InitializeOnLoad]
     public class NeovimExternalCodeEditor : IExternalCodeEditor
     {
-        private static readonly Regex _argumentsRegex = new(
-            @"\$\(.*?\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex _argumentsRegex = new(@"\$\(.*?\)", RegexOptions.Compiled);
 
         private readonly ManualResetEvent _isInitializedMre;
 
@@ -43,7 +42,7 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
                 _installations = new CodeEditor.Installation[] { new() { Name = "Neovim", Path = neovimBinPath } };
                 return;
             }
-            // Linux/macOS don't support searching from executables yet.
+            // macOS don't support searching from executables yet.
             if (!ProcessHelper.SupportsFindExecutablePath)
             {
                 _installations = Array.Empty<CodeEditor.Installation>();
@@ -55,19 +54,19 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
             // cause a deadlock. So execute on the next editor tick.
             EditorApplication.delayCall += () =>
             {
-                Task.Run(() =>
+                Task.Run(async () =>
                 {
                     string neovimBinPath = ProcessHelper.FindExecutablePath("nvim");
+
                     // Cannot set EditorPrefs on a background thread, so execute on the next editor tick.
-                    EditorApplication.delayCall += () =>
+                    await Awaitable.MainThreadAsync();
+
+                    SetInstallationInternal(neovimBinPath);
+                    if (_installations.Length > 0)
                     {
-                        SetInstallationInternal(neovimBinPath);
-                        if (_installations.Length > 0)
-                        {
-                            NeovimCodeEditorSettings.NeovimBinPath = _installations[0].Path;
-                        }
-                        _isInitializedMre.Set();
-                    };
+                        NeovimCodeEditorSettings.NeovimBinPath = _installations[0].Path;
+                    }
+                    _isInitializedMre.Set();
                 });
             };
         }

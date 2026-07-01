@@ -9,8 +9,10 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
 {
     public static class ProcessHelper
     {
-        public static readonly bool SupportsFindExecutablePath = Application.platform is RuntimePlatform.WindowsEditor;
-        public static readonly bool SupportsFindNamedPipe = Application.platform is RuntimePlatform.WindowsEditor;
+        public static readonly bool SupportsFindExecutablePath =
+            Application.platform is RuntimePlatform.WindowsEditor or RuntimePlatform.LinuxEditor;
+        public static readonly bool SupportsFindNamedPipe =
+            Application.platform is RuntimePlatform.WindowsEditor or RuntimePlatform.LinuxEditor;
 
         public static void LaunchNeovim(
             string editorPath,
@@ -127,15 +129,17 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
         {
             const int timeoutMs = 5000;
 
-            if (!SupportsFindExecutablePath)
+            string findExecutableTool = Application.platform switch
             {
-                throw new NotImplementedException(
-                    $"Platform {Application.platform} does not support searching for executables currently");
-            }
+                RuntimePlatform.WindowsEditor => "where",
+                RuntimePlatform.LinuxEditor => "which",
+                _ => throw new PlatformNotSupportedException(
+                    "Platform {Application.platform} does not support searching for executables currently"),
+            };
 
             using var process = Process.Start(new ProcessStartInfo
             {
-                FileName = "where",
+                FileName = findExecutableTool,
                 CreateNoWindow = true,
                 ErrorDialog = false,
                 RedirectStandardOutput = true,
@@ -165,15 +169,27 @@ namespace SigmaTau.Unity.NeovimCodeEditor.Editor
             return path.Trim();
         }
 
+        public static string GetPipeRootPath()
+        {
+            return Application.platform switch
+            {
+                RuntimePlatform.WindowsEditor => "\\\\.\\pipe",
+                RuntimePlatform.LinuxEditor => Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR") ?? string.Empty,
+                _ => string.Empty,
+            };
+        }
+
         public static string SearchForNamedPipe(string editorPath, CancellationToken cancellationToken)
         {
-            if (!SupportsFindNamedPipe)
+            string pipeFolderPath = GetPipeRootPath();
+
+            if (string.IsNullOrWhiteSpace(pipeFolderPath))
             {
-                throw new InvalidOperationException(
-                    $"Platform {Application.platform} does not support searching for named pipes currently");
+                Debug.LogWarning("Could not find pipe folder to search");
+                return null;
             }
 
-            foreach (string namedPipePath in Directory.EnumerateFiles("\\\\.\\pipe\\", "*nvim*"))
+            foreach (string namedPipePath in Directory.EnumerateFiles(pipeFolderPath, "*nvim*"))
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
